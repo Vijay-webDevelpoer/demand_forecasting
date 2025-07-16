@@ -9,16 +9,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# Load model and feature columns
+# Load model
 model_data = joblib.load('model/xgb_model.pkl')
-
 if isinstance(model_data, tuple) and len(model_data) == 2:
     model, feature_cols = model_data
 else:
     model = model_data
     feature_cols = []
 
-# Load users
+# Load users safely
 try:
     with open("users.json", "r") as f:
         users = json.load(f)
@@ -58,18 +57,16 @@ def signup():
 def home():
     if 'email' not in session:
         return redirect('/')
-
-    return render_template(
-        'home.html',
-        last_inputs=session.get('last_inputs', {}),
-        result=session.get('result'),
-        investment=session.get('investment'),
-        revenue=session.get('revenue'),
-        profit=session.get('profit'),
-        profit_percent=session.get('profit_percent', 0),
-        is_profit=session.get('is_profit', False),
-        dark_mode=session.get('dark_mode', False)
-    )
+    last_inputs = session.get('last_inputs', {})
+    return render_template('home.html',
+                           last_inputs=last_inputs,
+                           result=session.get('result'),
+                           investment=session.get('investment'),
+                           revenue=session.get('revenue'),
+                           profit=session.get('profit'),
+                           profit_percent=session.get('profit_percent', 0),
+                           is_profit=session.get('is_profit', False),
+                           dark_mode=session.get('dark_mode', False))
 
 @app.route('/toggle-theme')
 def toggle_theme():
@@ -80,7 +77,6 @@ def toggle_theme():
 def predict():
     if 'email' not in session:
         return redirect('/')
-
     try:
         data = {
             'Store ID': request.form.get('store_id', '').strip(),
@@ -96,17 +92,17 @@ def predict():
             'Seasonality': request.form.get('seasonality', '').strip(),
         }
 
-        # Date processing
         date_str = request.form.get('date', '')
-        now = datetime.datetime.now()
         if date_str:
             date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+            data['Day'] = date_obj.day
+            data['Month'] = date_obj.month
+            data['Year'] = date_obj.year
         else:
-            date_obj = now
-
-        data['Day'] = date_obj.day
-        data['Month'] = date_obj.month
-        data['Year'] = date_obj.year
+            now = datetime.datetime.now()
+            data['Day'] = now.day
+            data['Month'] = now.month
+            data['Year'] = now.year
 
         df = pd.DataFrame([data])
         df = pd.get_dummies(df)
@@ -114,7 +110,6 @@ def predict():
         for col in feature_cols:
             if col not in df.columns:
                 df[col] = 0
-
         df = df[feature_cols]
 
         prediction = float(model.predict(df)[0])
@@ -136,35 +131,24 @@ def predict():
         session['profit_percent'] = profit_percent
         session['is_profit'] = is_profit
 
+        # Save to user_history
         record = {
             "email": session['email'],
             "timestamp": str(datetime.datetime.now()),
-            "store_id": data['Store ID'],
-            "product_id": data['Product ID'],
-            "category": data['Category'],
-            "region": data['Region'],
-            "inventory": data['Inventory Level'],
-            "units_sold": data['Units Sold'],
-            "units_ordered": data['Units Ordered'],
-            "price": price,
-            "discount": discount,
+            **data,
             "demand": round(prediction, 2),
-            "profit_percent": profit_percent,
-            "month": data["Month"],
-            "year": data["Year"]
+            "profit_percent": profit_percent
         }
-
         try:
             with open("user_history.json", "r") as f:
                 history = json.load(f)
         except Exception:
             history = []
-
         history.append(record)
         with open("user_history.json", "w") as f:
             json.dump(history, f, indent=2)
 
-        # Dashboard data
+        # Dashboard record
         actual_demand = prediction * 0.98
         record_dashboard = {
             "month": data["Month"],
@@ -172,21 +156,18 @@ def predict():
             "predicted": round(prediction, 2),
             "actual": round(actual_demand, 2)
         }
-
         try:
             with open("actual_vs_predicted.json", "r") as f:
                 chart_data = json.load(f)
         except Exception:
             chart_data = []
-
         chart_data.append(record_dashboard)
         with open("actual_vs_predicted.json", "w") as f:
             json.dump(chart_data, f, indent=2)
 
         return redirect('/home')
-
     except Exception as e:
-        print(f"[ERROR] Prediction failed: {e}")
+        print("Prediction Error:", e)
         return redirect('/home')
 
 @app.route('/history')
@@ -212,13 +193,7 @@ def dashboard():
         data = []
 
     if not data:
-        return render_template("dashboard.html",
-                               chart_labels=[],
-                               chart_predicted=[],
-                               chart_actual=[],
-                               mae=0,
-                               rmse=0,
-                               dark_mode=session.get('dark_mode', False))
+        return render_template("dashboard.html", chart_labels=[], chart_predicted=[], chart_actual=[], mae=0, rmse=0)
 
     predicted = [float(d['predicted']) for d in data]
     actual = [float(d['actual']) for d in data]
