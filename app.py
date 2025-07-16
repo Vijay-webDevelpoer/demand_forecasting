@@ -9,16 +9,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# Load model and feature columns (adjust if needed)
+# Load model and feature columns
 model_data = joblib.load('model/xgb_model.pkl')
-# If your joblib file contains a tuple like (model, feature_cols), unpack here:
+
 if isinstance(model_data, tuple) and len(model_data) == 2:
     model, feature_cols = model_data
 else:
     model = model_data
-    feature_cols = []  # fallback, ensure you have this list saved somewhere
+    feature_cols = []
 
-# Load users safely
+# Load users
 try:
     with open("users.json", "r") as f:
         users = json.load(f)
@@ -59,25 +59,17 @@ def home():
     if 'email' not in session:
         return redirect('/')
 
-    last_inputs = session.get('last_inputs', {})
-
-    # Optional: pass last prediction results from session if you want persistence
-    result = session.get('result')
-    investment = session.get('investment')
-    revenue = session.get('revenue')
-    profit = session.get('profit')
-    profit_percent = session.get('profit_percent', 0)
-    is_profit = session.get('is_profit', False)
-
-    return render_template('home.html',
-                           last_inputs=last_inputs,
-                           result=result,
-                           investment=investment,
-                           revenue=revenue,
-                           profit=profit,
-                           profit_percent=profit_percent,
-                           is_profit=is_profit,
-                           dark_mode=session.get('dark_mode', False))
+    return render_template(
+        'home.html',
+        last_inputs=session.get('last_inputs', {}),
+        result=session.get('result'),
+        investment=session.get('investment'),
+        revenue=session.get('revenue'),
+        profit=session.get('profit'),
+        profit_percent=session.get('profit_percent', 0),
+        is_profit=session.get('is_profit', False),
+        dark_mode=session.get('dark_mode', False)
+    )
 
 @app.route('/toggle-theme')
 def toggle_theme():
@@ -90,7 +82,6 @@ def predict():
         return redirect('/')
 
     try:
-        # Extract and clean form data
         data = {
             'Store ID': request.form.get('store_id', '').strip(),
             'Product ID': request.form.get('product_id', '').strip(),
@@ -105,35 +96,29 @@ def predict():
             'Seasonality': request.form.get('seasonality', '').strip(),
         }
 
-        # Parse date
+        # Date processing
         date_str = request.form.get('date', '')
+        now = datetime.datetime.now()
         if date_str:
             date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
-            data['Day'] = date_obj.day
-            data['Month'] = date_obj.month
-            data['Year'] = date_obj.year
         else:
-            # Default to today's date if not provided
-            now = datetime.datetime.now()
-            data['Day'] = now.day
-            data['Month'] = now.month
-            data['Year'] = now.year
+            date_obj = now
 
-        # Prepare DataFrame and dummies for categorical vars
+        data['Day'] = date_obj.day
+        data['Month'] = date_obj.month
+        data['Year'] = date_obj.year
+
         df = pd.DataFrame([data])
         df = pd.get_dummies(df)
 
-        # Add missing columns with zeros for feature alignment
         for col in feature_cols:
             if col not in df.columns:
                 df[col] = 0
 
         df = df[feature_cols]
 
-        # Predict demand
         prediction = float(model.predict(df)[0])
 
-        # Calculate financial metrics
         price = data['Price']
         discount = data['Discount']
         cost_price = price * (1 - discount / 100)
@@ -143,7 +128,6 @@ def predict():
         profit_percent = round((profit / revenue) * 100, 2) if revenue > 0 else 0
         is_profit = profit >= 0
 
-        # Save to session to persist between requests
         session['last_inputs'] = data
         session['result'] = round(prediction, 2)
         session['investment'] = round(investment, 2)
@@ -152,7 +136,6 @@ def predict():
         session['profit_percent'] = profit_percent
         session['is_profit'] = is_profit
 
-        # Save record in user_history.json
         record = {
             "email": session['email'],
             "timestamp": str(datetime.datetime.now()),
@@ -167,9 +150,10 @@ def predict():
             "discount": discount,
             "demand": round(prediction, 2),
             "profit_percent": profit_percent,
-            "month": data['Month'],
-            "year": data['Year']
+            "month": data["Month"],
+            "year": data["Year"]
         }
+
         try:
             with open("user_history.json", "r") as f:
                 history = json.load(f)
@@ -180,14 +164,15 @@ def predict():
         with open("user_history.json", "w") as f:
             json.dump(history, f, indent=2)
 
-        # Save for dashboard - actual vs predicted
-        actual_demand = prediction * 0.98  # Dummy actual demand
+        # Dashboard data
+        actual_demand = prediction * 0.98
         record_dashboard = {
             "month": data["Month"],
             "year": data["Year"],
             "predicted": round(prediction, 2),
             "actual": round(actual_demand, 2)
         }
+
         try:
             with open("actual_vs_predicted.json", "r") as f:
                 chart_data = json.load(f)
@@ -201,8 +186,7 @@ def predict():
         return redirect('/home')
 
     except Exception as e:
-        print(f"Error in /predict: {e}")
-        # Optionally flash error or handle gracefully
+        print(f"[ERROR] Prediction failed: {e}")
         return redirect('/home')
 
 @app.route('/history')

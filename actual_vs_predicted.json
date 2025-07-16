@@ -160,5 +160,35 @@
     "year": 2025,
     "predicted": 109.41,
     "actual": 107.22
+  },
+  {
+    "month": 8,
+    "year": 2025,
+    "predicted": 19.55,
+    "actual": 19.16
+  },
+  {
+    "month": 8,
+    "year": 2025,
+    "predicted": 19.65,
+    "actual": 19.25
+  },
+  {
+    "month": 1,
+    "year": 2026,
+    "predicted": 22.23,
+    "actual": 21.79
+  },
+  {
+    "month": 11,
+    "year": 2025,
+    "predicted": 495.54,
+    "actual": 485.63
+  },
+  {
+    "month": 11,
+    "year": 2025,
+    "predicted": 104.71,
+    "actual": 102.62
   }
 ]

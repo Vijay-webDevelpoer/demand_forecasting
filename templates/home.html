@@ -19,7 +19,7 @@
     .left-panel {
       width: 35%;
       background: linear-gradient(to right, #6a11cb, #2575fc);
-      padding: 20px 20px 10px;
+      padding: 20px;
       color: white;
       overflow-y: auto;
     }
@@ -27,10 +27,6 @@
       flex: 1;
       background: #fff;
       padding: 30px;
-      display: flex;
-      flex-direction: column;
-      justify-content: start;
-      align-items: center;
       overflow-y: auto;
     }
     .form-control, .form-select {
@@ -45,11 +41,6 @@
     }
     .form-select option {
       color: black;
-    }
-    input[type="date"] {
-      background-color: rgba(255, 255, 255, 0.2);
-      border: 1px solid #fff;
-      color: white;
     }
     label {
       font-weight: 500;
@@ -84,137 +75,141 @@
 <div class="main">
   <!-- ✅ LEFT PANEL -->
   <div class="left-panel">
-    <div>
-      <h4 class="mb-4"><span style="font-size: 1.4rem;">🛒</span> Predict Demand</h4>
-      <form method="POST" action="/predict" class="row g-3">
-        <div class="col-md-6">
-          <label>Store ID</label>
-          <select name="store_id" class="form-select" required>
-            <option value="">Choose...</option>
-            <option {{ 'selected' if last_inputs['Store ID']=='S001' }}>S001</option>
-            <option {{ 'selected' if last_inputs['Store ID']=='S002' }}>S002</option>
-            <option {{ 'selected' if last_inputs['Store ID']=='S003' }}>S003</option>
-            <option {{ 'selected' if last_inputs['Store ID']=='S004' }}>S004</option>
-            <option {{ 'selected' if last_inputs['Store ID']=='S005' }}>S005</option>
-          </select>
-        </div>
+    <h4 class="mb-4">🛒 Predict Demand</h4>
+    <form method="POST" action="/predict" class="row g-3">
 
-        <div class="col-md-6">
-          <label>Product ID</label>
-          <select name="product_id" class="form-select" required>
-            <option value="">Choose...</option>
-            {% for pid in ['P1001','P1002','P1003','P1004','P1005'] %}
-              <option {{ 'selected' if last_inputs['Product ID']==pid }}>{{ pid }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <!-- Store ID -->
+      <div class="col-md-6">
+        <label>Store ID</label>
+        <select name="store_id" class="form-select" required>
+          <option value="">Choose...</option>
+          {% for sid in ['S001','S002','S003','S004','S005'] %}
+            <option {{ 'selected' if last_inputs['Store ID']==sid }}>{{ sid }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="col-md-6">
-          <label>Category</label>
-          <select name="category" class="form-select" required>
-            <option value="">Choose...</option>
-            {% for c in ['Electronics','Grocery','Clothing','Home & Kitchen','Beauty'] %}
-              <option {{ 'selected' if last_inputs['Category']==c }}>{{ c }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <!-- Product ID -->
+      <div class="col-md-6">
+        <label>Product ID</label>
+        <select name="product_id" class="form-select" required>
+          <option value="">Choose...</option>
+          {% for pid in ['P1001','P1002','P1003','P1004','P1005','P1006','P1007','P1008','P1009','P1010'] %}
+            <option {{ 'selected' if last_inputs['Product ID']==pid }}>{{ pid }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="col-md-6">
-          <label>Region</label>
-          <select name="region" class="form-select" required>
-            <option value="">Choose...</option>
-            {% for r in ['North','South','East','West'] %}
-              <option {{ 'selected' if last_inputs['Region']==r }}>{{ r }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <!-- Category -->
+      <div class="col-md-6">
+        <label>Category</label>
+        <select name="category" class="form-select" required>
+          <option value="">Choose...</option>
+          {% for c in ['Electronics','Grocery','Clothing','Home & Kitchen','Beauty','Toys','Books','Footwear'] %}
+            <option {{ 'selected' if last_inputs['Category']==c }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="col-md-6">
-          <label>Inventory Level</label>
-          <input type="number" name="inventory" class="form-control" value="{{ last_inputs['Inventory'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Region -->
+      <div class="col-md-6">
+        <label>Region</label>
+        <select name="region" class="form-select" required>
+          <option value="">Choose...</option>
+          {% for r in ['North','South','East','West','Central','Northeast'] %}
+            <option {{ 'selected' if last_inputs['Region']==r }}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="col-md-6">
-          <label>Units Sold</label>
-          <input type="number" name="units_sold" class="form-control" value="{{ last_inputs['Units Sold'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Inventory -->
+      <div class="col-md-6">
+        <label>Inventory Level</label>
+        <input type="number" name="inventory" class="form-control" value="{{ last_inputs['Inventory Level'] if last_inputs else '' }}" required>
+      </div>
 
-        <div class="col-md-6">
-          <label>Units Ordered</label>
-          <input type="number" name="units_ordered" class="form-control" value="{{ last_inputs['Units Ordered'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Units Sold -->
+      <div class="col-md-6">
+        <label>Units Sold</label>
+        <input type="number" name="units_sold" class="form-control" value="{{ last_inputs['Units Sold'] if last_inputs else '' }}" required>
+      </div>
 
-        <div class="col-md-6">
-          <label>Price (₹)</label>
-          <input type="number" step="0.01" name="price" class="form-control" value="{{ last_inputs['Price'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Units Ordered -->
+      <div class="col-md-6">
+        <label>Units Ordered</label>
+        <input type="number" name="units_ordered" class="form-control" value="{{ last_inputs['Units Ordered'] if last_inputs else '' }}" required>
+      </div>
 
-        <div class="col-md-6">
-          <label>Discount (%)</label>
-          <input type="range" name="discount" min="0" max="100" step="1" class="form-range" id="discountRange" value="{{ last_inputs['Discount'] if last_inputs else 0 }}">
-          <span class="text-white" id="discountValue">{{ last_inputs['Discount'] if last_inputs else 0 }}%</span>
-        </div>
+      <!-- Price -->
+      <div class="col-md-6">
+        <label>Price (₹)</label>
+        <input type="number" step="0.01" name="price" class="form-control" value="{{ last_inputs['Price'] if last_inputs else '' }}" required>
+      </div>
 
-        <div class="col-md-6">
-          <label>Competitor Pricing</label>
-          <input type="number" step="0.01" name="competitor" class="form-control" value="{{ last_inputs['Competitor'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Discount -->
+      <div class="col-md-6">
+        <label>Discount (%)</label>
+        <input type="range" name="discount" min="0" max="100" step="1" class="form-range" id="discountRange" value="{{ last_inputs['Discount'] if last_inputs else 0 }}">
+        <span class="text-white" id="discountValue">{{ last_inputs['Discount'] if last_inputs else 0 }}%</span>
+      </div>
 
-        <div class="col-md-6">
-          <label>Seasonality</label>
-          <select name="seasonality" class="form-select" required>
-            <option value="">Choose...</option>
-            {% for s in ['High','Medium','Low'] %}
-              <option {{ 'selected' if last_inputs['Seasonality']==s }}>{{ s }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <!-- Competitor Pricing -->
+      <div class="col-md-6">
+        <label>Competitor Pricing</label>
+        <input type="number" step="0.01" name="competitor" class="form-control" value="{{ last_inputs['Competitor Pricing'] if last_inputs else '' }}" required>
+      </div>
 
-        <div class="col-md-6">
-          <label>Select Date</label>
-          <input type="date" name="date" class="form-control" value="{{ last_inputs['Date'] if last_inputs else '' }}" required>
-        </div>
+      <!-- Seasonality -->
+      <div class="col-md-6">
+        <label>Seasonality</label>
+        <select name="seasonality" class="form-select" required>
+          <option value="">Choose...</option>
+          {% for s in ['High','Medium','Low','Off-Season'] %}
+            <option {{ 'selected' if last_inputs['Seasonality']==s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="col-12 text-center mt-3">
-          <button type="submit" class="btn btn-light px-5">Predict</button>
-        </div>
-      </form>
-    </div>
+      <!-- Date -->
+      <div class="col-md-6">
+        <label>Select Date</label>
+        <input type="date" name="date" class="form-control" value="{{ last_inputs['Date'] if last_inputs else '' }}" required>
+      </div>
+
+      <div class="col-12 text-center mt-3">
+        <button type="submit" class="btn btn-light px-5">Predict</button>
+      </div>
+    </form>
   </div>
 
   <!-- ✅ RIGHT PANEL -->
   <div class="right-panel">
-    <div class="w-75">
-      <h5 class="text-start mb-3">Details</h5>
-      <table class="table table-bordered mx-auto">
-        <tbody>
-          <tr><th>Store ID</th><td>{{ last_inputs['Store ID'] if last_inputs else '' }}</td></tr>
-          <tr><th>Product ID</th><td>{{ last_inputs['Product ID'] if last_inputs else '' }}</td></tr>
-          <tr><th>Category</th><td>{{ last_inputs['Category'] if last_inputs else '' }}</td></tr>
-          <tr><th>Region</th><td>{{ last_inputs['Region'] if last_inputs else '' }}</td></tr>
-          <tr><th>Price</th><td>{{ last_inputs['Price'] if last_inputs else '' }}</td></tr>
-          <tr><th>Discount</th><td>{{ last_inputs['Discount'] if last_inputs else '' }}%</td></tr>
-          <tr><th>Seasonality</th><td>{{ last_inputs['Seasonality'] if last_inputs else '' }}</td></tr>
-        </tbody>
+    <div class="w-75 mx-auto">
+      <h5 class="mb-3">Details</h5>
+      <table class="table table-bordered">
+        <tr><th>Store ID</th><td>{{ last_inputs['Store ID'] if last_inputs else '' }}</td></tr>
+        <tr><th>Product ID</th><td>{{ last_inputs['Product ID'] if last_inputs else '' }}</td></tr>
+        <tr><th>Category</th><td>{{ last_inputs['Category'] if last_inputs else '' }}</td></tr>
+        <tr><th>Region</th><td>{{ last_inputs['Region'] if last_inputs else '' }}</td></tr>
+        <tr><th>Price</th><td>₹{{ last_inputs['Price'] if last_inputs else '' }}</td></tr>
+        <tr><th>Discount</th><td>{{ last_inputs['Discount'] if last_inputs else '' }}%</td></tr>
+        <tr><th>Seasonality</th><td>{{ last_inputs['Seasonality'] if last_inputs else '' }}</td></tr>
       </table>
 
-      <!-- ✅ Row with metrics and donut chart -->
-      <div class="row mt-4 w-100">
+      <div class="row mt-4">
         <div class="col-md-6">
-          <div style="font-size: 0.95rem;">
-            <p><strong>Estimated Demand:</strong> {{ result if result else '' }}</p>
-            <p><strong>Investment:</strong> ₹{{ investment if investment else '' }}</p>
-            <p><strong>Revenue:</strong> ₹{{ revenue if revenue else '' }}</p>
-            {% if result %}
-              {% if is_profit %}
-                <p class="text-success"><strong>Profit:</strong> ₹{{ profit }} ↑</p>
-              {% else %}
-                <p class="text-danger"><strong>Loss:</strong> ₹{{ profit }} ↓</p>
-              {% endif %}
+          <p><strong>Estimated Demand:</strong> {{ result }}</p>
+          <p><strong>Investment:</strong> ₹{{ investment }}</p>
+          <p><strong>Revenue:</strong> ₹{{ revenue }}</p>
+          {% if result %}
+            {% if is_profit %}
+              <p class="text-success"><strong>Profit:</strong> ₹{{ profit }} ↑</p>
             {% else %}
-              <p><strong>Profit/Loss:</strong></p>
+              <p class="text-danger"><strong>Loss:</strong> ₹{{ profit }} ↓</p>
             {% endif %}
-          </div>
+          {% else %}
+            <p><strong>Profit/Loss:</strong></p>
+          {% endif %}
         </div>
         <div class="col-md-6 d-flex justify-content-center align-items-center">
           <div id="donut-chart"></div>
