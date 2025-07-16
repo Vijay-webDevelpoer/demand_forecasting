@@ -1,1 +1,7 @@
-p
+Flask
+gunicorn
+pandas
+numpy
+xgboost
+joblib
+plotly
